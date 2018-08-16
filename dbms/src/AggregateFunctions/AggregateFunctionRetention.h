@@ -5,7 +5,6 @@
 #include <unordered_set>
 #include <Columns/ColumnsNumber.h>
 #include <Columns/ColumnArray.h>
-#include <DataTypes/DataTypeDateTime.h>
 #include <DataTypes/DataTypesNumber.h>
 #include <DataTypes/DataTypeArray.h>
 #include <IO/ReadHelpers.h>
@@ -25,15 +24,6 @@ namespace ErrorCodes
 extern const int NUMBER_OF_ARGUMENTS_DOESNT_MATCH;
 extern const int TOO_MANY_ARGUMENTS_FOR_FUNCTION;
 }
-
-struct ComparePairFirst final
-{
-    template <typename T1, typename T2>
-    bool operator()(const std::pair<T1, T2> & lhs, const std::pair<T1, T2> & rhs) const
-    {
-        return lhs.first < rhs.first;
-    }
-};
 
 struct AggregateFunctionRetentionData
 {
@@ -103,7 +93,7 @@ public:
 
     DataTypePtr getReturnType() const override
     {
-        return std::make_shared<DataTypeArray>( std::make_shared<DataTypeUInt8>() );
+        return std::make_shared<DataTypeArray>(std::make_shared<DataTypeUInt8>());
     }
 
     void add(AggregateDataPtr place, const IColumn ** columns, const size_t row_num, Arena *) const override
@@ -139,12 +129,12 @@ public:
         auto & data_to = static_cast<ColumnArray &>(to).getData();
         auto & offsets_to = static_cast<ColumnArray &>(to).getOffsets();
 
-        const auto firstFlag = this->data(place).events.test(0);
-        data_to.insert(firstFlag ?  Field(static_cast<UInt64>(1)) :  Field(static_cast<UInt64>(0)));
+        const auto first_flag = this->data(place).events.test(0);
+        data_to.insert(first_flag ?  Field(static_cast<UInt64>(1)) : Field(static_cast<UInt64>(0)));
         for (const auto i : ext::range(1, events_size))
         {
             auto result = Field(static_cast<UInt64>(0));
-            if (firstFlag && this->data(place).events.test(i))
+            if (first_flag && this->data(place).events.test(i))
                 result = Field(static_cast<UInt64>(1));
 
             data_to.insert(result);
